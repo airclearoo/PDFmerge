@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF合并工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a6bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --border-color: #dee2e6;
+            --border-radius: 4px;
+            --box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .app-description {
+            font-size: 1.1rem;
+            color: var(--secondary-color);
+            margin-bottom: 5px;
+        }
+
+        .author-info {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-top: 10px;
+        }
+
+        .author-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .author-info a:hover {
+            text-decoration: underline;
+        }
+
+        .drop-area {
+            border: 2px dashed var(--primary-color);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            text-align: center;
+            background-color: rgba(74, 107, 255, 0.05);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .drop-area.highlight {
+            background-color: rgba(74, 107, 255, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .drop-area-text {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #3a5bef;
+        }
+
+        .btn:disabled {
+            background-color: var(--secondary-color);
+            cursor: not-allowed;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .file-list-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 20px;
+        }
+
+        .file-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .file-count {
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 15px;
+            padding-left: 40px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-color);
+        }
+
+        .file-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-item:hover {
+            background-color: rgba(74, 107, 255, 0.05);
+        }
+
+        .file-item.selected {
+            background-color: rgba(74, 107, 255, 0.1);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-icon {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .file-name {
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        .file-pages {
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--secondary-color);
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .action-btn.delete:hover {
+            color: var(--danger-color);
+        }
+
+        .sort-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .sort-options {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            z-index: 10;
+            display: none;
+        }
+
+        .sort-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .sort-option:hover {
+            background-color: rgba(74, 107, 255, 0.05);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary-color);
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 15px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .page-selector {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .file-pages-container {
+            margin-bottom: 30px;
+        }
+
+        .file-pages-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .file-pages-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .file-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .page-range {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .page-range input {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+        }
+
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .page-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .page-item:hover {
+            border-color: var(--primary-color);
+        }
+
+        .page-item.selected {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 107, 255, 0.3);
+        }
+
+        .page-preview {
+            height: 140px;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .page-preview canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .page-number {
+            padding: 5px;
+            text-align: center;
+            font-size: 0.8rem;
+            background-color: #f5f5f5;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .preview-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            max-height: 70vh;
+        }
+
+        .preview-canvas {
+            max-width: 100%;
+            box-shadow: var(--box-shadow);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            color: white;
+        }
+
+        .loading-text {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .progress-container {
+            width: 80%;
+            max-width: 400px;
+            background-color: #444;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .dragging {
+            opacity: 0.5;
+            background-color: rgba(74, 107, 255, 0.1);
+        }
+
+        .help-content {
+            line-height: 1.8;
+        }
+
+        .help-content h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .help-content ul {
+            padding-left: 20px;
+        }
+
+        .help-content li {
+            margin-bottom: 5px;
+        }
+
+        .about-content {
+            line-height: 1.8;
+            text-align: center;
+        }
+
+        .about-content h3 {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .about-logo {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .app-title {
+                font-size: 2rem;
+            }
+
+            .drop-area {
+                padding: 20px;
+            }
+
+            .file-pages-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .page-range {
+                flex-wrap: wrap;
+            }
+
+            .pages-grid {
+                grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="app-header">
+            <h1 class="app-title">PDF合并工具</h1>
+            <p class="app-description">选择、排序、合并PDF文件，完全在浏览器中操作</p>
+            <div class="author-info">
+                <span>作者: Jueyi_ye</span>
+                <span style="margin-left: 15px;">联系: <a href="mailto:jueyi_y@163.com">jueyi_y@163.com</a></span>
+            </div>
+        </div>
+
+        <div class="drop-area" id="drop-area">
+            <p class="drop-area-text">拖放PDF文件到这里，或者</p>
+            <button class="btn" id="select-file-btn">选择文件</button>
+            <input type="file" id="file-input" class="file-input" accept=".pdf" multiple>
+        </div>
+
+        <div class="file-list-container">
+            <div class="file-list-header">
+                <div class="file-count" id="file-count">0 个文件</div>
+                <div class="file-actions">
+                    <div class="sort-container">
+                        <button class="btn btn-outline" id="sort-btn">
+                            <i class="fas fa-sort"></i> 排序
+                        </button>
+                        <div class="sort-options" id="sort-options">
+                            <div class="sort-option" data-sort="name">按名称排序</div>
+                            <div class="sort-option" data-sort="number">按数字排序</div>
+                            <div class="sort-option" data-sort="date">按添加时间排序</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline" id="select-all-btn" disabled>全选</button>
+                    <button class="btn btn-outline" id="clear-selection-btn" disabled>取消选择</button>
+                    <button class="btn btn-danger" id="clear-all-btn" disabled>清空</button>
+                </div>
+            </div>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="search-input" placeholder="搜索文件...">
+            </div>
+            <div class="file-list" id="file-list"></div>
+        </div>
+
+        <div class="text-center">
+            <button class="btn" id="merge-btn" disabled>合并选中的文件</button>
+            <button class="btn btn-outline" id="help-btn" style="margin-left: 10px;">
+                <i class="fas fa-question-circle"></i> 帮助
+            </button>
+        </div>
+    </div>
+
+    <!-- 页面选择模态框 -->
+    <div class="modal-overlay" id="page-selector-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">选择要合并的页面</h3>
+                <button class="modal-close" id="close-page-selector">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="page-selector" id="page-selector"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancel-page-selection">取消</button>
+                <button class="btn" id="confirm-page-selection">合并</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 帮助模态框 -->
+    <div class="modal-overlay" id="help-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">使用帮助</h3>
+                <button class="modal-close" id="close-help">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-content">
+                    <h3>如何使用PDF合并工具</h3>
+                    <ul>
+                        <li>拖放PDF文件到指定区域，或点击"选择文件"按钮</li>
+                        <li>选择要合并的文件（点击文件项进行选择/取消选择）</li>
+                        <li>通过拖放调整文件顺序</li>
+                        <li>点击"合并选中的文件"按钮</li>
+                        <li>在弹出的页面选择器中，选择每个文件要包含的页面</li>
+                        <li>点击"合并"按钮完成合并</li>
+                    </ul>
+
+                    <h3>文件管理</h3>
+                    <ul>
+                        <li>点击文件名称可选择/取消选择文件</li>
+                        <li>使用"全选"按钮选择所有文件</li>
+                        <li>使用"取消选择"按钮取消所有选择</li>
+                        <li>使用"清空"按钮删除所有文件</li>
+                        <li>使用搜索框可以快速查找文件</li>
+                        <li>点击排序按钮可以按不同方式排序文件</li>
+                    </ul>
+
+                    <h3>页面选择</h3>
+                    <ul>
+                        <li>点击页面缩略图可选择/取消选择单个页面</li>
+                        <li>使用"全选"按钮选择文件的所有页面</li>
+                        <li>使用"清除"按钮取消文件的所有页面选择</li>
+                        <li>使用页面范围选择器可以快速选择连续的页面范围</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="close-help-btn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关于模态框 -->
+    <div class="modal-overlay" id="about-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">关于</h3>
+                <button class="modal-close" id="close-about">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="about-content">
+                    <div class="about-logo">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <h3>PDF合并工具</h3>
+                    <p>版本 1.0.0</p>
+                    <p>一个完全在浏览器中运行的PDF合并工具，无需安装任何软件。</p>
+                    <p>支持文件排序、页面选择和预览功能。</p>
+                    <p>© 2025 PDF合并工具</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="close-about-btn">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载中遮罩 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-text" id="loading-text">正在处理，请稍候...</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0%</div>
+    </div>
+
+    <!-- 引入必要的库 -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/pdfjs-dist@2.12.313/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/downloadjs/1.4.8/download.min.js"></script>
+    
+    <!-- 引入自定义脚本 -->
+    <script src="pdf-merger-improved-script.js"></script>
+</body>
+</html>
